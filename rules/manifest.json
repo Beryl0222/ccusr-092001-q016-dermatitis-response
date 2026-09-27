@@ -1,0 +1,10 @@
+{
+  "active": "1.0.0",
+  "schema": 1,
+  "versions": {
+    "1.0.0": {
+      "file": "v1.0.0.json",
+      "sha256": "67bcfc1f17191faed74b7aa6f434967f0fd5eb99a07ff8caecdfb10dc20fa429"
+    }
+  }
+}

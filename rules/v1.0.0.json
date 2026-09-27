@@ -1,0 +1,158 @@
+{
+  "rule_version": "1.0.0",
+  "effective_from": "2026-09-27",
+  "status": "active",
+  "supersedes": null,
+  "domain_source": "domain.json",
+  "scope_note": "本规则仅用于隐翅虫相关皮炎疑似暴露后的即时分级与健康提示，不构成诊断；线上结论不得表述为确诊。",
+  "required_minimum_fields": [
+    "region",
+    "exposure_scenario",
+    "lesion_signs",
+    "time_since_exposure_hours"
+  ],
+  "field_rules": {
+    "region": {
+      "type": "string",
+      "description": "事件发生地的行政区代码或标准化地名，仅用于趋势聚合",
+      "example": "310104"
+    },
+    "exposure_scenario": {
+      "type": "enum",
+      "values": ["室内趋光", "草丛接触", "水边活动", "虫体受压"],
+      "allow_unknown": true
+    },
+    "lesion_signs": {
+      "type": "enum_list",
+      "values": ["无明显皮损", "线状红斑", "大面积红斑", "水疱", "密集脓疱", "糜烂渗出", "灼痛", "瘙痒"],
+      "allow_unknown": true
+    },
+    "time_since_exposure_hours": {
+      "type": "number_or_unknown",
+      "min": 0,
+      "max": 720,
+      "description": "距暴露或发现皮损的小时数；家长无法确认时填 unknown"
+    },
+    "age_band": {
+      "type": "enum_optional",
+      "values": ["婴幼儿(0-3)", "儿童(4-11)", "青少年(12-17)", "成人(18-59)", "长者(60+)"],
+      "description": "年龄段而非具体年龄，最小必要原则下可选；婴幼儿用于升级判断"
+    },
+    "photo_assessment": {
+      "type": "enum_optional",
+      "values": ["清晰可判读", "模糊", "光线不足", "无法判断"],
+      "description": "坐席对照片质量的人工判读结论，不由模型自动识别"
+    },
+    "prior_home_treatments": {
+      "type": "enum_list_optional",
+      "values": ["牙膏", "酒精", "碘伏", "清水冲洗", "肥皂水冲洗", "搔抓或挑破", "不明偏方", "无"]
+    }
+  },
+  "danger_signs": ["大面积红斑", "水疱", "密集脓疱", "糜烂渗出"],
+  "escalation_rules": [
+    {
+      "id": "R-DANGER-01",
+      "when": { "any_lesion_sign_in": ["大面积红斑", "水疱", "密集脓疱", "糜烂渗出"] },
+      "level": "尽快就医",
+      "dispatch": "human_agent_and_offline",
+      "advice": "出现上述任一表现时不要继续自行处理，不要挑破水疱或脓疱；请尽快线下就诊（皮肤科/急诊），热线同步转人工坐席跟进。"
+    },
+    {
+      "id": "R-AGE-01",
+      "when": { "age_band_in": ["婴幼儿(0-3)"], "and_any_lesion_sign_in": ["线状红斑", "大面积红斑", "水疱", "密集脓疱", "糜烂渗出", "灼痛"] },
+      "level": "人工复核",
+      "dispatch": "human_agent",
+      "advice": "婴幼儿皮肤反应可能进展更快，转人工坐席复核，由坐席判断是否需要尽快就医。"
+    },
+    {
+      "id": "R-PHOTO-01",
+      "when": { "photo_assessment_in": ["模糊", "光线不足", "无法判断"] },
+      "level": "人工复核",
+      "dispatch": "human_agent",
+      "advice": "照片不足以支持判读，已转人工坐席；在坐席确认前按不确定处理，请不要据此认为情况轻微。"
+    }
+
+  ],
+  "immediate_actions": [
+    {
+      "id": "A-WASH-01",
+      "trigger": { "always_for_new_exposure": true },
+      "text": "立即用大量清水冲洗接触部位至少10分钟，冲去残留虫体体液；冲洗时避免液体流经未受累皮肤。"
+    },
+    {
+      "id": "A-WASH-02",
+      "trigger": { "time_since_exposure_hours_lte": 6 },
+      "text": "如暴露发生在6小时内，清水冲洗后可用肥皂水（普通肥皂兑水）轻柔清洗接触部位，再用清水冲净。"
+    },
+    {
+      "id": "A-DONT-01",
+      "trigger": { "always_for_new_exposure": true },
+      "text": "不要在患处涂抹牙膏、酒精、碘伏、酱油、花露水或其他不明偏方；不要搔抓、揉搓或挑破水疱脓疱。"
+    },
+    {
+      "id": "A-COOL-01",
+      "trigger": { "no_danger_sign": true },
+      "text": "无危险信号时可局部冷湿敷缓解灼痛，保持患处清洁干燥，居家观察并记录皮损范围是否扩大。"
+    }
+  ],
+  "home_treatment_corrections": {
+    "牙膏": {
+      "id": "C-TP-01",
+      "risk": "牙膏含氟化物、发泡剂与摩擦剂，会刺激已受损皮肤，加重灼痛并可能诱发接触性皮炎。",
+      "correction": "请立即用清水轻轻洗去牙膏，按 A-WASH-01 重新冲洗；不要再涂抹。"
+    },
+    "酒精": {
+      "id": "C-AL-01",
+      "risk": "隐翅虫皮炎是刺激性接触性皮炎，皮肤屏障已受损；酒精会加重刺激、疼痛与渗出。",
+      "correction": "停止使用酒精，改用清水冲洗；若已出现糜烂或明显疼痛，按 R-DANGER-01 就医。"
+    },
+    "碘伏": {
+      "id": "C-IOD-01",
+      "risk": "碘伏对虫体刺激性体液无中和作用，在糜烂创面上可能加重刺激并影响医生对皮损的判断。",
+      "correction": "用清水冲净残留碘伏，不要反复涂抹；保留就诊信息，告知接诊医生用过碘伏。"
+    },
+    "搔抓或挑破": {
+      "id": "C-SCR-01",
+      "risk": "挑破水疱或脓疱会增加继发感染与色素沉着风险，并可能把残留刺激物带到其他部位。",
+      "correction": "停止搔抓或挑破，剪短指甲，必要时纱布轻覆；已破溃渗液按 R-DANGER-01 处理。"
+    },
+    "不明偏方": {
+      "id": "C-UNK-01",
+      "risk": "成分不明的外用品可能加重皮肤损伤或掩盖病情。",
+      "correction": "立即停用并用清水冲洗，记录产品或物料名称（如有），就诊时告知医生。"
+    }
+  },
+  "advice_levels": ["立即冲洗", "居家观察", "人工复核", "尽快就医"],
+  "insufficient_info_policy": {
+    "missing_required": "REQUIRE_INFO",
+    "unknown_lesion_with_unknown_photo": "HUMAN_REVIEW",
+    "never_emit_low_risk_when_unknown": true,
+    "text": "缺少任一最小必要信息时不得给出“居家观察/无大碍”等低风险结论，只能给出去识别化的通用冲洗提示并要求补充信息或转人工。"
+  },
+  "merge_policy": {
+    "window_hours": 72,
+    "keys": ["family_pseudonym", "region"],
+    "description": "同一家庭假名在同一地区、72小时窗口内的补充材料并入原事件；窗口外视为新事件。"
+  },
+  "analytics": {
+    "region_granularity": "district",
+    "time_bucket": "day",
+    "min_cell_count": 5,
+    "suppression": "低于最小格子数的地区×日格子在公开统计中抑制为 suppressed，分母也隐藏以防差分推断",
+    "cluster_rule": {
+      "baseline_days": 14,
+      "min_baseline_points": 7,
+      "multiplier": 2.0,
+      "min_absolute_increase": 5,
+      "description": "当日计数至少为前14个有效日中位数的2倍且绝对增量≥5时判定聚集性上升；基线点不足7个不告警。"
+    },
+    "alert_dedup": {
+      "per_region_cooldown_days": 7,
+      "description": "同一地区7日内只产生一条唯一告警，告警ID由规则版本、地区、日期确定性派生。"
+    }
+  },
+  "retention": {
+    "raw_event_days": 90,
+    "note": "原始事件材料保留90天后清除，趋势库仅保留去标识化聚合数。"
+  }
+}
